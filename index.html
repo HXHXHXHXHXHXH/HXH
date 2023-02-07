@@ -1,88 +1,91 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="UTF-8">
-    <title>HXHXH</title>
-    <style>
-      /* Set main color scheme */
-      body {
-        background-color: white;
-        color: purple;
-        height: 85vh;
-      }
 
-      /* Style buttons */
-      .container {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: center;
-        align-items: center;
-        height: 100%;
-      }
+<head>
+  <meta charset="UTF-8">
+  <title>HXHXH</title>
+  <style>
+    /* Set main color scheme */
+    body {
+      background-color: white;
+      color: purple;
+      height: 85vh;
+    }
 
-      .btn {
-        height: 70px;
-        width: 70px;
-        border: 1px solid purple;
-        border-radius: 10px;
-        color: white;
-        background-color: purple;
-        padding: 20px 20px;
-        text-decoration: none;
-        display: flex;
-        font-size: 40px;
-        font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
-        margin: 10px 8px;
-        cursor: pointer;
-        justify-content: center;
-        align-items: center;
-      }
+    /* Style buttons */
+    .container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+      height: 100%;
+    }
 
-      /* Add hover effect to buttons */
-      .btn:hover {
-        background-color: white;
-        color: purple;
-      }
-    </style>
-  </head>
-  <body>
-    <!-- Title -->
-    <div style="text-align: center; font-size: 60px;">HXH-Web-HXH</div>
+    .btn {
+      height: 70px;
+      width: 70px;
+      border: 1px solid purple;
+      border-radius: 10px;
+      color: white;
+      background-color: purple;
+      padding: 20px 20px;
+      text-decoration: none;
+      display: flex;
+      font-size: 40px;
+      font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+      margin: 10px 8px;
+      cursor: pointer;
+      justify-content: center;
+      align-items: center;
+    }
 
-    <!-- Buttons -->
-    <div class="container">
-      <div>
-        <a href="/HXH/rect.html" class="btn">Rect</a>
-        <a href="#" class="btn">?</a>
-        <a href="#" class="btn">?</a>
-      </div>
-      <div>
-        <a href="#" class="btn">?</a>
-        <a href="#" class="btn">?</a>
-        <a href="#" class="btn">?</a>
-      </div>
-      <div>
-        <a href="#" class="btn">?</a>
-        <a href="#" class="btn">?</a>
-        <a href="#" class="btn">?</a>
-      </div>
+    /* Add hover effect to buttons */
+    .btn:hover {
+      background-color: white;
+      color: purple;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Title -->
+  <div style="text-align: center; font-size: 60px;">HXH-Web-HXH</div>
+
+  <!-- Buttons -->
+  <div class="container">
+    <div>
+      <a href="/HXH/rect.html" class="btn">Rect</a>
+      <a href="/HXH/life.html" class="btn">Life</a>
+      <a href="#" class="btn">?</a>
     </div>
-    
-    <script type="text/javascript">
-        var phoneWidth =  parseInt(window.screen.width);
-        var phoneScale = phoneWidth/640;
-        var ua = navigator.userAgent;
-        if (/Android (\d+\.\d+)/.test(ua)){
-          var version = parseFloat(RegExp.$1);
-            if(version>2.3){
-                document.write('<meta name="viewport" content="width=640, minimum-scale = '+phoneScale+', maximum-scale = '+phoneScale+', target-densitydpi=device-dpi">');
-            }else{
-                document.write('<meta name="viewport" content="width=640, target-densitydpi=device-dpi">');
-            }
-        } else {
-            document.write('<meta name="viewport" content="width=640, user-scalable=no, target-densitydpi=device-dpi">');
-        }
+    <div>
+      <a href="#" class="btn">?</a>
+      <a href="#" class="btn">?</a>
+      <a href="#" class="btn">?</a>
+    </div>
+    <div>
+      <a href="#" class="btn">?</a>
+      <a href="#" class="btn">?</a>
+      <a href="#" class="btn">?</a>
+    </div>
+  </div>
+
+  <script type="text/javascript">
+    var phoneWidth = parseInt(window.screen.width);
+    var phoneScale = phoneWidth / 640;
+    var ua = navigator.userAgent;
+    if (/Android (\d+\.\d+)/.test(ua)) {
+      var version = parseFloat(RegExp.$1);
+      if (version > 2.3) {
+        document.write('<meta name="viewport" content="width=640, minimum-scale = ' + phoneScale + ', maximum-scale = ' + phoneScale + ', target-densitydpi=device-dpi">');
+      } else {
+        document.write('<meta name="viewport" content="width=640, target-densitydpi=device-dpi">');
+      }
+    } else {
+      document.write('<meta name="viewport" content="width=640, user-scalable=no, target-densitydpi=device-dpi">');
+    }
   </script>
 
-  </body>
+</body>
+
 </html>

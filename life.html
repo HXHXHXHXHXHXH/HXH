@@ -1,0 +1,156 @@
+<html>
+
+<head>
+    <style>
+        .container {
+            margin: 0 auto;
+            border-style: solid;
+            border: 11px solid #7b7b7b;
+        }
+
+        .button {
+            background-color: black;
+            color: white;
+            width: 913px;
+            height: 130px;
+            border-radius: 20px;
+            border-style: solid;
+            border: 11px solid #7b7b7b;
+            align-self: center;
+            display: block;
+            margin: 0 auto;
+            font-size: 60px;
+        }
+
+        body {
+            background-color: #000000;
+        }
+
+        td {
+            padding: 8px;
+        }
+    </style>
+</head>
+
+<body>
+    <table id="grid" class="container">
+    </table>
+    <br>
+    <button class="button" id="buttononly">▶</button>
+    <script>
+        const grid = document.getElementById("grid");
+        let gridArray = [];
+        let intervalId;
+        let isRunning = false;
+        let isToggled = false;
+        // Create the grid
+        for (let row = 0; row < 50; row++) {
+            let tr = document.createElement("tr");
+            gridArray[row] = [];
+            for (let col = 0; col < 50; col++) {
+                let td = document.createElement("td");
+                td.addEventListener("click", function () {
+                    if (this.style.backgroundColor === "white") {
+                        this.style.backgroundColor = "black";
+                    } else {
+                        this.style.backgroundColor = "white";
+                    }
+                });
+                tr.appendChild(td);
+                gridArray[row][col] = td;
+            }
+            grid.appendChild(tr);
+        }
+
+        function startGame() {
+            clearInterval(intervalId);
+            isRunning = true;
+            intervalId = setInterval(updateGrid, 200);
+        }
+
+        function pauseGame() {
+            clearInterval(intervalId);
+            isRunning = false;
+        }
+
+        function updateGrid() {
+            let nextGeneration = [];
+            for (let row = 0; row < gridArray.length; row++) {
+                nextGeneration[row] = [];
+                for (let col = 0; col < gridArray[row].length; col++) {
+                    let numNeighbors = countNeighbors(row, col);
+                    if (gridArray[row][col].style.backgroundColor === "white") {
+                        if (numNeighbors === 2 || numNeighbors === 3) {
+                            nextGeneration[row][col] = 1;
+                        } else {
+                            nextGeneration[row][col] = 0;
+                        }
+                    } else {
+                        if (numNeighbors === 3) {
+                            nextGeneration[row][col] = 1;
+                        } else {
+                            nextGeneration[row][col] = 0;
+                        }
+                    }
+                }
+            }
+
+            for (let row = 0; row < gridArray.length; row++) {
+                for (let col = 0; col < gridArray[row].length; col++) {
+                    if (nextGeneration[row][col] === 1) {
+                        gridArray[row][col].style.backgroundColor = "white";
+                    } else {
+                        gridArray[row][col].style.backgroundColor = "black";
+                    }
+                }
+            }
+        }
+
+
+        function countNeighbors(row, col) {
+            let count = 0;
+            for (let i = -1; i <= 1; i++) {
+                for (let j = -1; j <= 1; j++) {
+                    if (i === 0 && j === 0) {
+                        continue;
+                    }
+                    let r = row + i;
+                    let c = col + j;
+                    if (r >= 0 && r < gridArray.length && c >= 0 && c < gridArray[0].length) {
+                        if (gridArray[r][c].style.backgroundColor === "white") {
+                            count++;
+                        }
+                    }
+                }
+            }
+            return count;
+        }
+        const button = document.getElementById("buttononly")
+
+
+
+        button.addEventListener("click", function () {
+            if (isToggled) {
+                button.style.backgroundColor = "black";
+                button.style.color = "white";
+                button.style.fontSize = "60px";
+                button.style.padding = "0px 0px 0px 0px"
+                button.innerHTML = "▶";
+                pauseGame();
+            } else {
+                button.style.backgroundColor = "white";
+                button.style.color = "black";
+                button.style.fontSize = "88px";
+                button.style.paddingRight = "8px"
+                button.innerHTML = "◼";
+                startGame();
+            }
+            isToggled = !isToggled;
+        });
+
+
+
+    </script>
+</body>
+
+</html>
