@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audio Buttons</title>
+    <style>
+        .button-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .audio-button {
+            padding: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: rgb(125, 90, 145);
+            color: rgb(242, 151, 86);
+            border: rgb(68, 37, 86) solid 2px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>HXH</h1>
+    <div class="button-container" id="buttonContainer"></div>
+
+    <script>
+        const audioFiles = ['duang', 'WhatDogDoing', 'huh'];
+
+        const buttonContainer = document.getElementById('buttonContainer');
+
+        audioFiles.forEach((file, index) => {
+            const audioId = `audio${index + 1}`;
+            const buttonLabel = `${file}`;
+
+            const button = document.createElement('button');
+            button.className = 'audio-button';
+            button.textContent = buttonLabel;
+            button.onclick = () => playAudio(audioId);
+
+            const audioElement = document.createElement('audio');
+            audioElement.id = audioId;
+            audioElement.src = `audio/${file}.mp3`;
+
+            buttonContainer.appendChild(button);
+            document.body.appendChild(audioElement);
+        });
+
+        function playAudio(audioId) {
+            const audio = document.getElementById(audioId);
+            audio.play();
+        }
+    </script>
+</body>
+</html>
