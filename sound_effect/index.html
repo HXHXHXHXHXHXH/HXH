@@ -41,6 +41,7 @@
             const audioElement = document.createElement('audio');
             audioElement.id = audioId;
             audioElement.src = `audio/${file}.mp3`;
+            audioElement.preload = 'auto';
 
             buttonContainer.appendChild(button);
             document.body.appendChild(audioElement);
