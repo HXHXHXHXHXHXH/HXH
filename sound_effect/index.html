@@ -33,7 +33,15 @@
     <div id="loadingMessage">Loading...</div>
 
     <script>
-        const audioFiles = ['duang', 'WhatDogDoing', 'huh', '压迫感', 'byd猫嘲笑', '滑动变阻器', '钢管', '湿屁', '蜘蛛侠登场', '大笑', '嘟嘟哒嘟嘟哒', '音效免费', '海豚', '哇哦', 'tom叫1', 'tom叫2', '拉了'];
+        const audioFiles = [
+    'duang', 'WhatDogDoing', 'huh', '压迫感', 'byd猫嘲笑', '坠落', 'mc吃东西', 'mc哦', '滑动变阻器', '钢管', '湿屁', '干屁', '蜘蛛侠登场', '警报', '大笑',
+    '嘟嘟哒嘟嘟哒', '音效免费', '海豚', '哇哦', 'tom叫1', 'tom叫2', '拉了',
+    'aughh', 'hehehehi', 'hot', 'MyMyMy', 'OhHellNo', 'ohhhh', 'ok', 'O_o', 'WaitAMinWhoRU', 'wee', 'WhatTheHell',
+    'ysqd', '你个狗', '你好', '你怎么跟狗一样', '吃饱啦', '吟唱', '噔噔咚', '大危机', '大嘴巴子', '大大疑问', '大早丽丽',
+    '大象', '天堂', '威廉尖叫', '老毕登', '小毕登', '想啊很想啊', '我tm莱纳', '我不道啊', '打鼾omimimi', '抒情', '未响应', '欢呼',
+    '漂亮滴很呐', '狗', '电棍硅胶', '疑问啊', '硕藏话', '粑粑似的', '虫鸣', '额滴圣剑'
+];
+
         const buttonContainer = document.getElementById('buttonContainer');
         const loadingMessage = document.getElementById('loadingMessage');
 
@@ -45,24 +53,15 @@
             button.className = 'audio-button';
             button.textContent = buttonLabel;
             button.onclick = () => {
-                playAudio(audioId, file);
+                playAudio(file);
             };
 
             buttonContainer.appendChild(button);
         });
 
-        function playAudio(audioId, file) {
+        function playAudio(file) {
             loadingMessage.style.display = 'block';
-            const existingAudio = document.getElementById(audioId);
-            if (existingAudio) {
-                existingAudio.play();
-                loadingMessage.style.display = 'none';
-                return;
-            }
-
-            const audioElement = document.createElement('audio');
-            audioElement.id = audioId;
-            audioElement.src = `audio/${file}.mp3`;
+            const audioElement = new Audio(`audio/${file}.mp3`);
             audioElement.preload = 'auto';
             audioElement.oncanplaythrough = () => {
                 audioElement.play();
