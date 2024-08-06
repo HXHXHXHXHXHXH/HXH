@@ -6,7 +6,7 @@
     <title>Audio Buttons</title>
     <style>
         .button-container {
-            display: flex;
+            display: none; /* 初始时隐藏 */
             flex-wrap: wrap;
             gap: 10px;
         }
@@ -19,15 +19,31 @@
             border: rgb(68, 37, 86) solid 2px;
             border-radius: 5px;
         }
+        #loadingMessage {
+            font-size: 20px;
+            text-align: center;
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
     <h1>HXH</h1>
+    <div id="loadingMessage">Loading audio files, please wait...</div>
     <div class="button-container" id="buttonContainer"></div>
 
     <script>
         const audioFiles = ['duang', 'WhatDogDoing', 'huh', '压迫感', 'byd猫嘲笑', '滑动变阻器', '钢管', '湿屁', '蜘蛛侠登场', '大笑', 'mc吃东西'];
         const buttonContainer = document.getElementById('buttonContainer');
+        const loadingMessage = document.getElementById('loadingMessage');
+
+        let loadedCount = 0;
+
+        function checkAllLoaded() {
+            if (loadedCount === audioFiles.length) {
+                loadingMessage.style.display = 'none';
+                buttonContainer.style.display = 'flex';
+            }
+        }
 
         audioFiles.forEach((file, index) => {
             const audioId = `audio${index + 1}`;
@@ -42,6 +58,11 @@
             audioElement.id = audioId;
             audioElement.src = `audio/${file}.mp3`;
             audioElement.preload = 'auto';
+
+            audioElement.oncanplaythrough = () => {
+                loadedCount++;
+                checkAllLoaded();
+            };
 
             buttonContainer.appendChild(button);
             document.body.appendChild(audioElement);
