@@ -6,7 +6,7 @@
     <title>Audio Buttons</title>
     <style>
         .button-container {
-            display: none; /* 初始时隐藏 */
+            display: flex;
             flex-wrap: wrap;
             gap: 10px;
         }
@@ -23,27 +23,19 @@
             font-size: 20px;
             text-align: center;
             margin-top: 20px;
+            display: none;
         }
     </style>
 </head>
 <body>
     <h1>HXH</h1>
-    <div id="loadingMessage">Loading audio files, please wait...</div>
     <div class="button-container" id="buttonContainer"></div>
+    <div id="loadingMessage">Loading audio files, please wait...</div>
 
     <script>
-        const audioFiles = ['duang', 'WhatDogDoing', 'huh', '压迫感', 'byd猫嘲笑', '滑动变阻器', '钢管', '湿屁', '蜘蛛侠登场', '大笑', 'mc吃东西'];
+        const audioFiles = ['duang', 'WhatDogDoing', 'huh', '压迫感', 'byd猫嘲笑', '滑动变阻器', '钢管', '湿屁', '蜘蛛侠登场', '大笑'];
         const buttonContainer = document.getElementById('buttonContainer');
         const loadingMessage = document.getElementById('loadingMessage');
-
-        let loadedCount = 0;
-
-        function checkAllLoaded() {
-            if (loadedCount === audioFiles.length) {
-                loadingMessage.style.display = 'none';
-                buttonContainer.style.display = 'flex';
-            }
-        }
 
         audioFiles.forEach((file, index) => {
             const audioId = `audio${index + 1}`;
@@ -52,25 +44,35 @@
             const button = document.createElement('button');
             button.className = 'audio-button';
             button.textContent = buttonLabel;
-            button.onclick = () => playAudio(audioId);
+            button.onclick = () => {
+                playAudio(audioId, file);
+            };
+
+            buttonContainer.appendChild(button);
+        });
+
+        function playAudio(audioId, file) {
+            loadingMessage.style.display = 'block';
+            const existingAudio = document.getElementById(audioId);
+            if (existingAudio) {
+                existingAudio.play();
+                loadingMessage.style.display = 'none';
+                return;
+            }
 
             const audioElement = document.createElement('audio');
             audioElement.id = audioId;
             audioElement.src = `audio/${file}.mp3`;
             audioElement.preload = 'auto';
-
             audioElement.oncanplaythrough = () => {
-                loadedCount++;
-                checkAllLoaded();
+                audioElement.play();
+                loadingMessage.style.display = 'none';
+            };
+            audioElement.onerror = () => {
+                loadingMessage.textContent = `Failed to load ${file}. Please try again later.`;
             };
 
-            buttonContainer.appendChild(button);
             document.body.appendChild(audioElement);
-        });
-
-        function playAudio(audioId) {
-            const audio = document.getElementById(audioId);
-            audio.play();
         }
     </script>
 </body>
