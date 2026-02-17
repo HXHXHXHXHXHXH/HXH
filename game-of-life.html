@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Conway's Game of Life</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #1a1a2e;
+            color: #eee;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        #game-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #canvas-container {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            background: #0f0f1a;
+            touch-action: none;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        #controls {
+            background: #16213e;
+            padding: 10px 15px;
+            border-top: 2px solid #0f3460;
+        }
+
+        .controls-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+            justify-content: center;
+        }
+
+        button {
+            background: #0f3460;
+            color: #eee;
+            border: 1px solid #1a5490;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.2s;
+            min-height: 40px;
+            min-width: 48px;
+        }
+
+        button:hover {
+            background: #1a5490;
+        }
+
+        button:active {
+            background: #2357a8;
+        }
+
+        button.active {
+            background: #2357a8;
+            border-color: #3a7bd5;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex: 1;
+            min-width: 150px;
+            max-width: 300px;
+        }
+
+        .slider-container label {
+            font-size: 13px;
+            white-space: nowrap;
+        }
+
+        input[type="range"] {
+            flex: 1;
+            height: 6px;
+            -webkit-appearance: none;
+            background: #0f3460;
+            border-radius: 3px;
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            background: #e94560;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            background: #e94560;
+            border-radius: 50%;
+            cursor: pointer;
+            border: none;
+        }
+
+        #stats {
+            display: flex;
+            gap: 20px;
+            font-size: 14px;
+            color: #4db6ac;
+            font-weight: 500;
+        }
+
+        .stat {
+            white-space: nowrap;
+        }
+
+        .stat span {
+            color: #e94560;
+        }
+
+        .separator {
+            width: 1px;
+            height: 30px;
+            background: #0f3460;
+            margin: 0 5px;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 767px) {
+            .controls-row {
+                justify-content: center;
+            }
+
+            #stats {
+                order: -1;
+                width: 100%;
+                justify-content: center;
+                margin-bottom: 8px;
+                padding-bottom: 8px;
+                border-bottom: 1px solid #0f3460;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .controls-row {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 6px;
+            }
+
+            .slider-container {
+                grid-column: span 2;
+                max-width: 100%;
+            }
+
+            button {
+                padding: 12px 8px;
+                font-size: 13px;
+            }
+
+            #controls {
+                padding: 8px 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div id="canvas-container">
+            <canvas id="game-canvas"></canvas>
+        </div>
+        <div id="controls">
+            <div id="stats">
+                <div class="stat">Generation: <span id="generation">0</span></div>
+                <div class="stat">Population: <span id="population">0</span></div>
+            </div>
+            <div class="controls-row">
+                <button id="btn-start">Start</button>
+                <button id="btn-pause">Pause</button>
+                <button id="btn-stop">Stop</button>
+                <button id="btn-step">Step</button>
+                <div class="separator"></div>
+                <button id="btn-clear">Clear</button>
+                <button id="btn-random">Random</button>
+                <button id="btn-reset-view">Reset View</button>
+                <div class="separator"></div>
+                <div class="slider-container">
+                    <label for="speed-slider">Speed:</label>
+                    <input type="range" id="speed-slider" min="1" max="20" value="5">
+                    <span id="speed-value">5</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const CONFIG = {
+            GRID_ROWS: 200,
+            GRID_COLS: 300,
+            CELL_SIZE: 5,
+            MIN_ZOOM: 0.1,
+            MAX_ZOOM: 10,
+            DEFAULT_ZOOM: 1,
+            MIN_SPEED: 1,
+            MAX_SPEED: 20,
+            DEFAULT_SPEED: 5,
+            DEFAULT_DENSITY: 0.25
+        };
+
+        // GameState - Grid data management (double buffering)
+        const GameState = {
+            current: null,
+            next: null,
+            rows: CONFIG.GRID_ROWS,
+            cols: CONFIG.GRID_COLS,
+
+            init() {
+                const size = this.rows * this.cols;
+                this.current = new Uint8Array(size);
+                this.next = new Uint8Array(size);
+            },
+
+            getIndex(row, col) {
+                return ((row % this.rows) + this.rows) % this.rows * this.cols +
+                       ((col % this.cols) + this.cols) % this.cols;
+            },
+
+            isAlive(row, col) {
+                return this.current[this.getIndex(row, col)] === 1;
+            },
+
+            setAlive(row, col, state) {
+                this.current[this.getIndex(row, col)] = state ? 1 : 0;
+            },
+
+            swapBuffers() {
+                const temp = this.current;
+                this.current = this.next;
+                this.next = temp;
+            },
+
+            clear() {
+                this.current.fill(0);
+                this.next.fill(0);
+            },
+
+            randomize(density = CONFIG.DEFAULT_DENSITY) {
+                for (let i = 0; i < this.current.length; i++) {
+                    this.current[i] = Math.random() < density ? 1 : 0;
+                }
+            },
+
+            getPopulation() {
+                let count = 0;
+                for (let i = 0; i < this.current.length; i++) {
+                    count += this.current[i];
+                }
+                return count;
+            }
+        };
+
+        // GameLogic - Game rules (neighbor counting, rule application)
+        const GameLogic = {
+            neighborsOffset: [
+                [-1, -1], [-1, 0], [-1, 1],
+                [0, -1],          [0, 1],
+                [1, -1],  [1, 0],  [1, 1]
+            ],
+
+            countNeighbors(row, col) {
+                let count = 0;
+                for (const [dr, dc] of this.neighborsOffset) {
+                    if (GameState.isAlive(row + dr, col + dc)) {
+                        count++;
+                    }
+                }
+                return count;
+            },
+
+            applyRules() {
+                const size = GameState.rows * GameState.cols;
+                for (let i = 0; i < size; i++) {
+                    const row = Math.floor(i / GameState.cols);
+                    const col = i % GameState.cols;
+                    const neighbors = this.countNeighbors(row, col);
+                    const alive = GameState.isAlive(row, col);
+
+                    if (alive && (neighbors < 2 || neighbors > 3)) {
+                        GameState.next[i] = 0;
+                    } else if (!alive && neighbors === 3) {
+                        GameState.next[i] = 1;
+                    } else {
+                        GameState.next[i] = GameState.current[i];
+                    }
+                }
+                GameState.swapBuffers();
+            },
+
+            step() {
+                this.applyRules();
+            }
+        };
+
+        // Renderer - Canvas rendering (pan, zoom, culling)
+        const Renderer = {
+            canvas: null,
+            ctx: null,
+            offsetX: 0,
+            offsetY: 0,
+            zoom: CONFIG.DEFAULT_ZOOM,
+            cellSize: CONFIG.CELL_SIZE,
+
+            init(canvas) {
+                this.canvas = canvas;
+                this.ctx = canvas.getContext('2d');
+                this.resize();
+                window.addEventListener('resize', () => this.resize());
+                this.resetView();
+            },
+
+            resize() {
+                const container = this.canvas.parentElement;
+                const dpr = window.devicePixelRatio || 1;
+                const rect = container.getBoundingClientRect();
+
+                this.canvas.width = rect.width * dpr;
+                this.canvas.height = rect.height * dpr;
+                this.ctx.scale(dpr, dpr);
+
+                this.width = rect.width;
+                this.height = rect.height;
+                this.draw();
+            },
+
+            resetView() {
+                this.offsetX = (this.width - GameState.cols * this.cellSize * this.zoom) / 2;
+                this.offsetY = (this.height - GameState.rows * this.cellSize * this.zoom) / 2;
+                this.zoom = CONFIG.DEFAULT_ZOOM;
+                this.draw();
+            },
+
+            screenToGrid(screenX, screenY) {
+                const gridX = Math.floor((screenX - this.offsetX) / (this.cellSize * this.zoom));
+                const gridY = Math.floor((screenY - this.offsetY) / (this.cellSize * this.zoom));
+                return { x: gridX, y: gridY };
+            },
+
+            draw() {
+                const ctx = this.ctx;
+                ctx.fillStyle = '#0f0f1a';
+                ctx.fillRect(0, 0, this.width, this.height);
+
+                const cellSize = this.cellSize * this.zoom;
+                const startX = Math.floor(-this.offsetX / cellSize);
+                const startY = Math.floor(-this.offsetY / cellSize);
+                const endX = Math.min(startX + Math.ceil(this.width / cellSize) + 1, GameState.cols);
+                const endY = Math.min(startY + Math.ceil(this.height / cellSize) + 1, GameState.rows);
+                const renderStartX = Math.max(0, startX);
+                const renderStartY = Math.max(0, startY);
+
+                // Draw cells
+                ctx.fillStyle = '#e94560';
+                ctx.beginPath();
+
+                for (let row = renderStartY; row < endY; row++) {
+                    for (let col = renderStartX; col < endX; col++) {
+                        if (GameState.isAlive(row, col)) {
+                            const x = Math.floor(this.offsetX + col * cellSize);
+                            const y = Math.floor(this.offsetY + row * cellSize);
+                            ctx.rect(x, y, Math.ceil(cellSize), Math.ceil(cellSize));
+                        }
+                    }
+                }
+                ctx.fill();
+
+                // Draw grid lines (only when zoomed in enough)
+                if (this.zoom > 1.5) {
+                    ctx.strokeStyle = '#1a2a4a';
+                    ctx.lineWidth = 0.5;
+                    ctx.beginPath();
+
+                    for (let col = renderStartX; col < endX; col++) {
+                        const x = Math.floor(this.offsetX + col * cellSize);
+                        ctx.moveTo(x, Math.max(0, this.offsetY + renderStartY * cellSize));
+                        ctx.lineTo(x, Math.min(this.height, this.offsetY + endY * cellSize));
+                    }
+
+                    for (let row = renderStartY; row < endY; row++) {
+                        const y = Math.floor(this.offsetY + row * cellSize);
+                        ctx.moveTo(Math.max(0, this.offsetX + renderStartX * cellSize), y);
+                        ctx.lineTo(Math.min(this.width, this.offsetX + endX * cellSize), y);
+                    }
+                    ctx.stroke();
+                }
+            }
+        };
+
+        // InputHandler - Input processing (mouse, touch, wheel)
+        const InputHandler = {
+            isDrawing: false,
+            isPanning: false,
+            isTouchDrawing: false,
+            isTouchPanning: false,
+            isPinching: false,
+            lastX: 0,
+            lastY: 0,
+            pinchStartDistance: 0,
+            pinchStartZoom: 1,
+            lastTouchDrawPos: null,
+
+            init() {
+                const canvas = Renderer.canvas;
+
+                // Mouse events
+                canvas.addEventListener('mousedown', (e) => this.onMouseDown(e));
+                window.addEventListener('mousemove', (e) => this.onMouseMove(e));
+                window.addEventListener('mouseup', () => this.onMouseUp());
+                canvas.addEventListener('wheel', (e) => this.onWheel(e), { passive: false });
+
+                // Touch events
+                canvas.addEventListener('touchstart', (e) => this.onTouchStart(e), { passive: false });
+                window.addEventListener('touchmove', (e) => this.onTouchMove(e), { passive: false });
+                window.addEventListener('touchend', () => this.onTouchEnd());
+
+                // Prevent context menu
+                canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+            },
+
+            onMouseDown(e) {
+                if (e.button === 0) { // Left click
+                    const rect = Renderer.canvas.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    const gridPos = Renderer.screenToGrid(x, y);
+
+                    if (gridPos.x >= 0 && gridPos.x < GameState.cols &&
+                        gridPos.y >= 0 && gridPos.y < GameState.rows) {
+                        this.isDrawing = true;
+                        this.drawCell(gridPos.x, gridPos.y);
+                    } else {
+                        this.isPanning = true;
+                    }
+                    this.lastX = x;
+                    this.lastY = y;
+                }
+            },
+
+            onMouseMove(e) {
+                const rect = Renderer.canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+
+                if (this.isDrawing) {
+                    const gridPos = Renderer.screenToGrid(x, y);
+                    if (gridPos.x >= 0 && gridPos.x < GameState.cols &&
+                        gridPos.y >= 0 && gridPos.y < GameState.rows) {
+                        this.drawCell(gridPos.x, gridPos.y);
+                    }
+                } else if (this.isPanning) {
+                    const dx = x - this.lastX;
+                    const dy = y - this.lastY;
+                    Renderer.offsetX += dx;
+                    Renderer.offsetY += dy;
+                    Renderer.draw();
+                }
+
+                this.lastX = x;
+                this.lastY = y;
+            },
+
+            onMouseUp() {
+                this.isDrawing = false;
+                this.isPanning = false;
+                UIController.updateStats();
+            },
+
+            onWheel(e) {
+                e.preventDefault();
+                const rect = Renderer.canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+
+                const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
+                const newZoom = Math.max(CONFIG.MIN_ZOOM, Math.min(CONFIG.MAX_ZOOM, Renderer.zoom * zoomFactor));
+
+                if (newZoom !== Renderer.zoom) {
+                    const scaleFactor = newZoom / Renderer.zoom;
+                    Renderer.offsetX = x - (x - Renderer.offsetX) * scaleFactor;
+                    Renderer.offsetY = y - (y - Renderer.offsetY) * scaleFactor;
+                    Renderer.zoom = newZoom;
+                    Renderer.draw();
+                }
+            },
+
+            onTouchStart(e) {
+                e.preventDefault();
+                const touches = e.touches;
+                const rect = Renderer.canvas.getBoundingClientRect();
+
+                if (touches.length === 1) {
+                    // Single touch - check if tapping on a cell
+                    const x = touches[0].clientX - rect.left;
+                    const y = touches[0].clientY - rect.top;
+                    const gridPos = Renderer.screenToGrid(x, y);
+
+                    if (gridPos.x >= 0 && gridPos.x < GameState.cols &&
+                        gridPos.y >= 0 && gridPos.y < GameState.rows) {
+                        this.isTouchDrawing = true;
+                        this.lastTouchDrawPos = gridPos;
+                        this.drawCell(gridPos.x, gridPos.y);
+                    } else {
+                        this.isTouchPanning = true;
+                    }
+                    this.lastX = x;
+                    this.lastY = y;
+                } else if (touches.length === 2) {
+                    // Two touches - pinch zoom
+                    this.isPinching = true;
+                    this.pinchStartDistance = this.getTouchDistance(touches);
+                    this.pinchStartZoom = Renderer.zoom;
+                }
+            },
+
+            onTouchMove(e) {
+                e.preventDefault();
+                const touches = e.touches;
+                const rect = Renderer.canvas.getBoundingClientRect();
+
+                if (touches.length === 1) {
+                    const x = touches[0].clientX - rect.left;
+                    const y = touches[0].clientY - rect.top;
+
+                    if (this.isTouchDrawing) {
+                        const gridPos = Renderer.screenToGrid(x, y);
+                        if (gridPos.x >= 0 && gridPos.x < GameState.cols &&
+                            gridPos.y >= 0 && gridPos.y < GameState.rows) {
+                            // Only draw if moved to a different cell
+                            if (!this.lastTouchDrawPos ||
+                                gridPos.x !== this.lastTouchDrawPos.x ||
+                                gridPos.y !== this.lastTouchDrawPos.y) {
+                                this.drawCell(gridPos.x, gridPos.y);
+                                this.lastTouchDrawPos = gridPos;
+                            }
+                        }
+                    } else if (this.isTouchPanning) {
+                        const dx = x - this.lastX;
+                        const dy = y - this.lastY;
+                        Renderer.offsetX += dx;
+                        Renderer.offsetY += dy;
+                        Renderer.draw();
+                    }
+
+                    this.lastX = x;
+                    this.lastY = y;
+                } else if (touches.length === 2 && this.isPinching) {
+                    const currentDistance = this.getTouchDistance(touches);
+                    const scaleFactor = currentDistance / this.pinchStartDistance;
+                    const newZoom = Math.max(CONFIG.MIN_ZOOM, Math.min(CONFIG.MAX_ZOOM, this.pinchStartZoom * scaleFactor));
+
+                    if (newZoom !== Renderer.zoom) {
+                        const centerX = (touches[0].clientX + touches[1].clientX) / 2 - rect.left;
+                        const centerY = (touches[0].clientY + touches[1].clientY) / 2 - rect.top;
+                        const zoomFactor = newZoom / Renderer.zoom;
+
+                        Renderer.offsetX = centerX - (centerX - Renderer.offsetX) * zoomFactor;
+                        Renderer.offsetY = centerY - (centerY - Renderer.offsetY) * zoomFactor;
+                        Renderer.zoom = newZoom;
+                        Renderer.draw();
+                    }
+                }
+            },
+
+            onTouchEnd() {
+                this.isTouchDrawing = false;
+                this.isTouchPanning = false;
+                this.isPinching = false;
+                this.lastTouchDrawPos = null;
+                UIController.updateStats();
+            },
+
+            getTouchDistance(touches) {
+                const dx = touches[0].clientX - touches[1].clientX;
+                const dy = touches[0].clientY - touches[1].clientY;
+                return Math.sqrt(dx * dx + dy * dy);
+            },
+
+            drawCell(x, y) {
+                const currentState = GameState.isAlive(y, x);
+                GameState.setAlive(y, x, !currentState);
+                Renderer.draw();
+            }
+        };
+
+        // SimulationCtrl - Simulation control (animation loop, speed management)
+        const SimulationCtrl = {
+            running: false,
+            speed: CONFIG.DEFAULT_SPEED,
+            generation: 0,
+            animationId: null,
+            lastFrameTime: 0,
+
+            init() {
+                this.startAnimationLoop();
+            },
+
+            setSpeed(speed) {
+                this.speed = speed;
+            },
+
+            start() {
+                this.running = true;
+                UIController.updatePlayButton();
+            },
+
+            pause() {
+                this.running = false;
+                UIController.updatePlayButton();
+            },
+
+            stop() {
+                this.running = false;
+                this.generation = 0;
+                UIController.updatePlayButton();
+                UIController.updateStats();
+            },
+
+            step() {
+                GameLogic.step();
+                this.generation++;
+                Renderer.draw();
+                UIController.updateStats();
+            },
+
+            startAnimationLoop() {
+                const loop = (timestamp) => {
+                    if (this.running) {
+                        const interval = 1000 / this.speed;
+                        if (timestamp - this.lastFrameTime >= interval) {
+                            this.step();
+                            this.lastFrameTime = timestamp;
+                        }
+                    }
+                    this.animationId = requestAnimationFrame(loop);
+                };
+                this.animationId = requestAnimationFrame(loop);
+            }
+        };
+
+        // UIController - UI updates (button states, counters)
+        const UIController = {
+            elements: {
+                btnStart: null,
+                btnPause: null,
+                btnStop: null,
+                btnStep: null,
+                btnClear: null,
+                btnRandom: null,
+                btnResetView: null,
+                speedSlider: null,
+                speedValue: null,
+                generation: null,
+                population: null
+            },
+
+            init() {
+                this.elements.btnStart = document.getElementById('btn-start');
+                this.elements.btnPause = document.getElementById('btn-pause');
+                this.elements.btnStop = document.getElementById('btn-stop');
+                this.elements.btnStep = document.getElementById('btn-step');
+                this.elements.btnClear = document.getElementById('btn-clear');
+                this.elements.btnRandom = document.getElementById('btn-random');
+                this.elements.btnResetView = document.getElementById('btn-reset-view');
+                this.elements.speedSlider = document.getElementById('speed-slider');
+                this.elements.speedValue = document.getElementById('speed-value');
+                this.elements.generation = document.getElementById('generation');
+                this.elements.population = document.getElementById('population');
+
+                this.bindEvents();
+            },
+
+            bindEvents() {
+                this.elements.btnStart.addEventListener('click', () => SimulationCtrl.start());
+                this.elements.btnPause.addEventListener('click', () => SimulationCtrl.pause());
+                this.elements.btnStop.addEventListener('click', () => SimulationCtrl.stop());
+                this.elements.btnStep.addEventListener('click', () => SimulationCtrl.step());
+
+                this.elements.btnClear.addEventListener('click', () => {
+                    GameState.clear();
+                    SimulationCtrl.stop();
+                    Renderer.draw();
+                });
+
+                this.elements.btnRandom.addEventListener('click', () => {
+                    GameState.randomize();
+                    SimulationCtrl.stop();
+                    Renderer.draw();
+                    this.updateStats();
+                });
+
+                this.elements.btnResetView.addEventListener('click', () => Renderer.resetView());
+
+                this.elements.speedSlider.addEventListener('input', (e) => {
+                    const speed = parseInt(e.target.value);
+                    SimulationCtrl.setSpeed(speed);
+                    this.elements.speedValue.textContent = speed;
+                });
+            },
+
+            updatePlayButton() {
+                this.elements.btnStart.classList.toggle('active', SimulationCtrl.running);
+                this.elements.btnPause.classList.toggle('active', !SimulationCtrl.running);
+            },
+
+            updateStats() {
+                this.elements.generation.textContent = SimulationCtrl.generation;
+                this.elements.population.textContent = GameState.getPopulation();
+            }
+        };
+
+        // Initialize application
+        function init() {
+            GameState.init();
+            Renderer.init(document.getElementById('game-canvas'));
+            InputHandler.init();
+            SimulationCtrl.init();
+            UIController.init();
+
+            // Start with random pattern
+            GameState.randomize();
+            Renderer.draw();
+            UIController.updateStats();
+        }
+
+        // Start when DOM is ready
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
